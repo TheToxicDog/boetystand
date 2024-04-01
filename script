@@ -1,31 +1,43 @@
-local userId = "174142107"
+local userId = "174142107" --PUT YOUR USERID HERE
 local botPlayer = game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Owner = game.Players:GetPlayerByUserId(userId)
 local stopped = false
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local mouse = botPlayer:GetMouse()
 
+game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ready!", "All")
 local whitelist = {"OtherOcean"}
+local combat = botPlayer.Backpack.Combat
 
--- Function to add a user to the whitelist
 local function whitelistuser(username)
     table.insert(whitelist, username)
     print(username .. " has been added to the whitelist.")
+    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(username .. " has been added to the whitelist.", "All")
 end
 
--- Function to remove a user from the whitelist
 local function unwhitelistuser(username)
     for i, name in ipairs(whitelist) do
         if name == username then
             table.remove(whitelist, i)
             print(username .. " has been removed from the whitelist.")
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(username .. " has been removed from the whitelist.", "All")
             return
         end
     end
     print(username .. " is not in the whitelist.")
 end
 
--- Function to teleport the local player to the given player
+local function viewwhitelist()
+    print("Whitelisted players:")
+    for _, player in ipairs(whitelist) do
+        print(player)
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(player, "All")
+    end
+end
+
 local function summonBotToPlayer(bot, targetPlayer)
     if stopped then
         return nil
@@ -33,15 +45,13 @@ local function summonBotToPlayer(bot, targetPlayer)
         if botPlayer.Character and targetPlayer.Character then
             local targetPosition = targetPlayer.Character.PrimaryPart.Position
             local playerOrientation = targetPlayer.Character.PrimaryPart.CFrame.lookVector
-            local offset = playerOrientation * -5 -- Adjust the distance as needed
+            local offset = playerOrientation * -5
             local summonPosition = targetPosition + offset
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
         
-            -- Preserve the bot's up and down orientation (pitch)
             local botPosition = botPlayer.Character.PrimaryPart.Position
-            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z) -- Preserve the same height
+            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z)
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(botPosition, lookAtPosition))
-        
             wait()
             summonBotToPlayer(bot, targetPlayer)
         else
@@ -50,13 +60,57 @@ local function summonBotToPlayer(bot, targetPlayer)
     end
 end
 
+local function gotoPlayer(username)
+    print(botPlayer)
+    print(username)
+    local player = game.Players:FindFirstChild(username)
+    if player then
+        print("Bot summoned to " .. username)
+        botPlayer.Character:SetPrimaryPartCFrame(player.Character.PrimaryPart.CFrame)
+    else
+        print("Player not found.")
+        print(player.Name)
+        print(player)
+    end
+end
+
+local function knockplayer(username)
+    local player = game.Players:FindFirstChild(username)
+    if player then
+        print("Knocking player " .. username)
+        combat.Parent = botPlayer.Character
+        local x, y = 100, 100
+        VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 1)
+        local targetPosition = player.Character.PrimaryPart.Position
+        local playerOrientation = player.Character.PrimaryPart.CFrame.lookVector
+        local offset = playerOrientation * -1
+        local summonPosition = targetPosition + offset
+
+        wait(1.4)
+        
+        local startTime = os.clock()
+        repeat
+            local targetPosition = player.Character.PrimaryPart.Position
+            local playerOrientation = player.Character.PrimaryPart.CFrame.lookVector
+            local offset = playerOrientation * -1
+            local summonPosition = targetPosition + offset
+            botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
+            wait()
+        until os.clock() - startTime >= 2
+        
+        VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 1)
+    else
+        print("No player by that username found.")
+    end
+end
+
 local function stopsummon()
     stopped = true
     wait()
     stopped = false
+    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ok I will stop", "All")
 end
 
--- Function to rejoin the game
 local function rejoinGame()
     local PlaceId = game.PlaceId
     local JobId = game.JobId
@@ -68,88 +122,70 @@ local function rejoinGame()
     end
 end
 
--- Function to make the bot say something
 local function botSay(message)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
 
 local commands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["s"] = summonBotToPlayer,
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["rj"] = rejoinGame,
     ["stop"] = stopsummon,
-    ["say"] = botSay, -- Command to make the bot say something
+    ["say"] = botSay,
+    ["goto"] = gotoPlayer,
+    ["knock"] = knockplayer,
 }
 local ownercommands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["s"] = summonBotToPlayer,
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["rj"] = rejoinGame,
     ["stop"] = stopsummon,
-    ["say"] = botSay, -- Command to make the bot say something
+    ["say"] = botSay,
     ["whitelist"] = whitelistuser,
     ["dewhitelist"] = unwhitelistuser,
     ["wl"] = whitelistuser,
     ["uwl"] = unwhitelistuser,
+    ["wlview"] = viewwhitelist,
+    ["whitelistview"] = viewwhitelist,
+    ["goto"] = gotoPlayer,
+    ["knock"] = knockplayer,
 }
+
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-    if table.find(whitelist, player.Name) then
-        player.Chatted:Connect(function(message)
-            print(tostring(player) .. " said: " .. message)
-            if message:sub(1, 1) == "." then
-                -- Split the message into command and arguments
-                local parts = message:sub(2):split(" ")
-                local command = parts[1]
-                local args = {}
-                for i = 2, #parts do
-                    table.insert(args, parts[i])
-                end
-                -- Check if the command exists in the commands table
-                local func = commands[command]
-                if func then
-                    print("Player executed command: " .. command)
-                    if command == "say" then
-                        local message = table.concat(args, " ")
-                        func(message)
-                    else
-                        func(botPlayer, player) -- Pass botPlayer and player to the command function
-                    end
-                else
-                    print("Unknown command:", command)
-                end
+    player.Chatted:Connect(function(message)
+        if message:sub(1, 1) == "." then
+            local parts = message:sub(2):split(" ")
+            local command = parts[1]
+            local args = {}
+            for i = 2, #parts do
+                table.insert(args, parts[i])
             end
-        end)
-    elseif player == Owner then
-        player.Chatted:Connect(function(message)
-            print(tostring(player) .. " said: " .. message)
-            if message:sub(1, 1) == "." then
-                -- Split the message into command and arguments
-                local parts = message:sub(2):split(" ")
-                local command = parts[1]
-                local args = {}
-                for i = 2, #parts do
-                    table.insert(args, parts[i])
-                end
-                -- Check if the command exists in the commands table
-                local func = ownercommands[command]
-                if func then
-                    print("Player executed command: " .. command)
-                    if command == "say" then
-                        local message = table.concat(args, " ")
-                        func(message)
-                    elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" then
-                        local username = table.concat(args, " ")
-                        func(username)
-                    else
-                        func(botPlayer, player) -- Pass botPlayer and player to the command function
-                    end
-                else
-                    print("Unknown command:", command)
-                end
+            local func
+            if table.find(whitelist, player.Name) then
+                func = commands[command]
+            elseif player == Owner then
+                func = ownercommands[command]
             end
-        end)
-    end
+            if func then
+                print(tostring(player) .. " said: " .. message)
+                print("Player executed command: " .. command)
+                if command == "say" then
+                    local message = table.concat(args, " ")
+                    func(message)
+                elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" or command == "knock" or command == "goto" then
+                    local username = table.concat(args, " ")
+                    print("username: "..username)
+                    func(username)
+                else
+                    func(botPlayer, player)
+                end
+            else
+                print("Unknown command:", command)
+            end
+        end
+    end)
 end
 
 if Owner then
