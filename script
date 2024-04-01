@@ -1,0 +1,161 @@
+local userId = "174142107"
+local botPlayer = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local Owner = game.Players:GetPlayerByUserId(userId)
+local stopped = false
+
+local whitelist = {"OtherOcean"}
+
+-- Function to add a user to the whitelist
+local function whitelistuser(username)
+    table.insert(whitelist, username)
+    print(username .. " has been added to the whitelist.")
+end
+
+-- Function to remove a user from the whitelist
+local function unwhitelistuser(username)
+    for i, name in ipairs(whitelist) do
+        if name == username then
+            table.remove(whitelist, i)
+            print(username .. " has been removed from the whitelist.")
+            return
+        end
+    end
+    print(username .. " is not in the whitelist.")
+end
+
+-- Function to teleport the local player to the given player
+local function summonBotToPlayer(bot, targetPlayer)
+    if stopped then
+        return nil
+    else
+        if botPlayer.Character and targetPlayer.Character then
+            local targetPosition = targetPlayer.Character.PrimaryPart.Position
+            local playerOrientation = targetPlayer.Character.PrimaryPart.CFrame.lookVector
+            local offset = playerOrientation * -5 -- Adjust the distance as needed
+            local summonPosition = targetPosition + offset
+            botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
+        
+            -- Preserve the bot's up and down orientation (pitch)
+            local botPosition = botPlayer.Character.PrimaryPart.Position
+            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z) -- Preserve the same height
+            botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(botPosition, lookAtPosition))
+        
+            wait()
+            summonBotToPlayer(bot, targetPlayer)
+        else
+            print("Cannot summon: Missing character(s).")
+        end
+    end
+end
+
+local function stopsummon()
+    stopped = true
+    wait()
+    stopped = false
+end
+
+-- Function to rejoin the game
+local function rejoinGame()
+    local PlaceId = game.PlaceId
+    local JobId = game.JobId
+    
+    if #Players:GetPlayers() <= 1 then
+        TeleportService:Teleport(PlaceId, botPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(PlaceId, JobId, botPlayer)
+    end
+end
+
+-- Function to make the bot say something
+local function botSay(message)
+    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+end
+
+local commands = {
+    ["summon"] = summonBotToPlayer,
+    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["rejoin"] = rejoinGame,
+    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["stop"] = stopsummon,
+    ["say"] = botSay, -- Command to make the bot say something
+}
+local ownercommands = {
+    ["summon"] = summonBotToPlayer,
+    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["rejoin"] = rejoinGame,
+    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["stop"] = stopsummon,
+    ["say"] = botSay, -- Command to make the bot say something
+    ["whitelist"] = whitelistuser,
+    ["dewhitelist"] = unwhitelistuser,
+    ["wl"] = whitelistuser,
+    ["uwl"] = unwhitelistuser,
+}
+for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+    if table.find(whitelist, player.Name) then
+        player.Chatted:Connect(function(message)
+            print(tostring(player) .. " said: " .. message)
+            if message:sub(1, 1) == "." then
+                -- Split the message into command and arguments
+                local parts = message:sub(2):split(" ")
+                local command = parts[1]
+                local args = {}
+                for i = 2, #parts do
+                    table.insert(args, parts[i])
+                end
+                -- Check if the command exists in the commands table
+                local func = commands[command]
+                if func then
+                    print("Player executed command: " .. command)
+                    if command == "say" then
+                        local message = table.concat(args, " ")
+                        func(message)
+                    else
+                        func(botPlayer, player) -- Pass botPlayer and player to the command function
+                    end
+                else
+                    print("Unknown command:", command)
+                end
+            end
+        end)
+    elseif player == Owner then
+        player.Chatted:Connect(function(message)
+            print(tostring(player) .. " said: " .. message)
+            if message:sub(1, 1) == "." then
+                -- Split the message into command and arguments
+                local parts = message:sub(2):split(" ")
+                local command = parts[1]
+                local args = {}
+                for i = 2, #parts do
+                    table.insert(args, parts[i])
+                end
+                -- Check if the command exists in the commands table
+                local func = ownercommands[command]
+                if func then
+                    print("Player executed command: " .. command)
+                    if command == "say" then
+                        local message = table.concat(args, " ")
+                        func(message)
+                    elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" then
+                        local username = table.concat(args, " ")
+                        func(username)
+                    else
+                        func(botPlayer, player) -- Pass botPlayer and player to the command function
+                    end
+                else
+                    print("Unknown command:", command)
+                end
+            end
+        end)
+    end
+end
+
+if Owner then
+    print("Welcome, " .. Owner.Name)
+    return Owner
+else
+    print("User not found, retrying!")
+    return nil
+end
