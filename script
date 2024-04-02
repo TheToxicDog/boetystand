@@ -12,9 +12,11 @@ game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageReque
 local whitelist = {"OtherOcean"}
 local UserInputService = game:GetService("UserInputService")
 local UFO = CFrame.new(66.5427094, 139, -697.639526)
+local BANK = CFrame.new(-436.293091, 22.9756889, -284.663605)
 _G.bring = null
 local pos1 = botPlayer.Character.LowerTorso.Position
 local combat
+local RIP = CFrame.new(-375, -21, 114)
 _G.finished = null
 repeat
     combat = botPlayer.Backpack:FindFirstChild("Combat")
@@ -242,7 +244,15 @@ end
 local function botSay(message)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
-
+local function ufo()
+    botPlayer.Character:SetPrimaryPartCFrame(UFO)
+end
+local function bank()
+    botPlayer.Character:SetPrimaryPartCFrame(BANK)
+end
+local function rip()
+    botPlayer.Character:SetPrimaryPartCFrame(RIP)
+end
 local commands = {
     ["summon"] = summonBotToPlayer,
     ["s"] = summonBotToPlayer,  -- Alias for summon command
@@ -254,6 +264,10 @@ local commands = {
     ["knock"] = knockplayer,
     ["bring"] = bringplayer,
     ["stomp"] = stompplayer,
+    ["ufo"] = ufo,
+    ["bank"] = bank,
+    ["rip"] = rip,
+    ["grave"] = rip,
 }
 local ownercommands = {
     ["summon"] = summonBotToPlayer,
@@ -272,6 +286,10 @@ local ownercommands = {
     ["knock"] = knockplayer,
     ["bring"] = bringplayer,
     ["stomp"] = stompplayer,
+    ["ufo"] = ufo,
+    ["bank"] = bank,
+    ["rip"] = rip,
+    ["grave"] = rip,
 }
 
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
@@ -295,7 +313,7 @@ for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
                 if command == "say" then
                     local message = table.concat(args, " ")
                     func(message)
-                elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" or command == "knock" or command == "goto" or command == "bring" or command == "stomp" then
+                elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" or command == "knock" or command == "goto" or command == "bring" or command == "stomp" or command == "bank" then
                     local username = table.concat(args, " ")
                     print("username: "..username)
                     func(username)
