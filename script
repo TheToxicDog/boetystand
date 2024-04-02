@@ -82,6 +82,9 @@ end
 local function pressE()
     keypress(Enum.KeyCode.E)
 end
+local function press1()
+    keypress(Enum.KeyCode.One)
+end
 local function grab(username, pos1)
     local player = game.Players:FindFirstChild(username)
     print("grabbing:" ..username)
@@ -113,9 +116,13 @@ local function stomp(username)
     if player.Character.BodyEffects.Dead.Value == true then
         print("dead")
         stomp = false
-    else
+    else if player.Character.BodyEffects["K.O"].Value == false then 
+        knockplayer(username)
+    else if player then
         print("missed, retrying")
         stomp(username)
+     end
+    end
     end
     wait(1)
     pressE()
@@ -140,8 +147,10 @@ local function knockplayer(username)
     _G.finished = "false"
     if player then
         local pos = botPlayer.Character.PrimaryPart.Position
+
         print("Knocking player " .. username)
-        combat.Parent = botPlayer.Character
+        press1()
+         
         VirtualInputManager:SendMouseButtonEvent(100, 100, 0, true, game, 1) 
     
         wait(1.5) -- Wait for 1.5 seconds
@@ -160,6 +169,7 @@ local function knockplayer(username)
         botPlayer.Character:SetPrimaryPartCFrame(UFO)
         if player.Character.BodyEffects["K.O"].Value == true then
             finished = true
+            press1()
             print("finishedknock")
             if _G.bring == true then 
                 grab(username, targetPosition)
@@ -290,6 +300,7 @@ local ownercommands = {
     ["bank"] = bank,
     ["rip"] = rip,
     ["grave"] = rip,
+    ["1"] = press1,
 }
 
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
