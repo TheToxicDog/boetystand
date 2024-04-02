@@ -1,4 +1,4 @@
-local userId = "174142107" --PUT YOUR USERID HERE
+local userId = "174142107"
 local botPlayer = game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -6,18 +6,31 @@ local Owner = game.Players:GetPlayerByUserId(userId)
 local stopped = false
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local mouse = botPlayer:GetMouse()
-
+local mouse = botPlayer:GetMouse() -- Change to botPlayer's mouse
+local pos = botPlayer.Character.PrimaryPart.Position
 game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ready!", "All")
 local whitelist = {"OtherOcean"}
-local combat = botPlayer.Backpack.Combat
+local UserInputService = game:GetService("UserInputService")
+local UFO = CFrame.new(66.5427094, 139, -697.639526)
+_G.bring = null
+local pos1 = botPlayer.Character.LowerTorso.Position
+local combat
+_G.finished = null
+repeat
+    combat = botPlayer.Backpack:FindFirstChild("Combat")
+    wait(0.1) -- Wait for a short duration before rechecking
+    print("waiting for combat tool")
+    botPlayer.Character:SetPrimaryPartCFrame(UFO)
+until combat
 
+-- Function to add a user to the whitelist
 local function whitelistuser(username)
     table.insert(whitelist, username)
     print(username .. " has been added to the whitelist.")
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(username .. " has been added to the whitelist.", "All")
 end
 
+-- Function to remove a user from the whitelist
 local function unwhitelistuser(username)
     for i, name in ipairs(whitelist) do
         if name == username then
@@ -30,6 +43,7 @@ local function unwhitelistuser(username)
     print(username .. " is not in the whitelist.")
 end
 
+-- Function to view the whitelist
 local function viewwhitelist()
     print("Whitelisted players:")
     for _, player in ipairs(whitelist) do
@@ -45,12 +59,13 @@ local function summonBotToPlayer(bot, targetPlayer)
         if botPlayer.Character and targetPlayer.Character then
             local targetPosition = targetPlayer.Character.PrimaryPart.Position
             local playerOrientation = targetPlayer.Character.PrimaryPart.CFrame.lookVector
-            local offset = playerOrientation * -5
+            local offset = playerOrientation * -5 -- Adjust the distance as needed
             local summonPosition = targetPosition + offset
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
         
+            -- Preserve the bot's up and down orientation (pitch)
             local botPosition = botPlayer.Character.PrimaryPart.Position
-            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z)
+            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z) -- Preserve the same height
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(botPosition, lookAtPosition))
             wait()
             summonBotToPlayer(bot, targetPlayer)
@@ -59,7 +74,51 @@ local function summonBotToPlayer(bot, targetPlayer)
         end
     end
 end
+local function pressG()
+    keypress(Enum.KeyCode.G)
+end
+local function pressE()
+    keypress(Enum.KeyCode.E)
+end
+local function grab(username, pos1)
+    local player = game.Players:FindFirstChild(username)
+    print("grabbing:" ..username)
+    local targetPosition = player.Character.PrimaryPart.Position
 
+    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+
+    local targetPosition = player.Character.LowerTorso.Position
+        botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition, lookAtPosition))
+        wait(0.1)
+        pressG()
+        wait(0.1)
+        if grabbed then
+            botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(pos1))
+        else if player.Character.BodyEffects["K.O"].Value == false then
+            return
+        else
+            grab(username)
+        end
+    end
+end
+local function stomp(username)
+    local player = game.Players:FindFirstChild(username)
+    local targetPosition = player.Character.LowerTorso.Position
+    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+    botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition.X, targetPosition.Y + 3, targetPosition.Z))
+    wait(1)
+    pressE()
+    if player.Character.BodyEffects.Dead.Value == true then
+        print("dead")
+        stomp = false
+    else
+        print("missed, retrying")
+        stomp(username)
+    end
+    wait(1)
+    pressE()
+    botPlayer.Character:SetPrimaryPartCFrame(UFO)
+end
 local function gotoPlayer(username)
     print(botPlayer)
     print(username)
@@ -76,33 +135,89 @@ end
 
 local function knockplayer(username)
     local player = game.Players:FindFirstChild(username)
+    _G.finished = "false"
     if player then
+        local pos = botPlayer.Character.PrimaryPart.Position
         print("Knocking player " .. username)
         combat.Parent = botPlayer.Character
-        local x, y = 100, 100
-        VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 1)
-        local targetPosition = player.Character.PrimaryPart.Position
-        local playerOrientation = player.Character.PrimaryPart.CFrame.lookVector
-        local offset = playerOrientation * -1
-        local summonPosition = targetPosition + offset
+        VirtualInputManager:SendMouseButtonEvent(100, 100, 0, true, game, 1) 
+    
+        wait(1.5) -- Wait for 1.5 seconds
 
-        wait(1.4)
-        
-        local startTime = os.clock()
-        repeat
-            local targetPosition = player.Character.PrimaryPart.Position
-            local playerOrientation = player.Character.PrimaryPart.CFrame.lookVector
-            local offset = playerOrientation * -1
-            local summonPosition = targetPosition + offset
-            botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
-            wait()
-        until os.clock() - startTime >= 2
-        
-        VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 1)
+        -- Look at the target player's position
+        local targetPosition = player.Character.PrimaryPart.Position
+
+        local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+        local targetPosition2 = Vector3.new(targetPosition.X, targetPosition.Y + 2, targetPosition.Z)
+        botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition2, lookAtPosition))
+
+        wait(0.2) -- Wait for a short duration for better alignment
+
+        VirtualInputManager:SendMouseButtonEvent(100, 100, 0, false, game, 1)
+        wait(1)
+        botPlayer.Character:SetPrimaryPartCFrame(UFO)
+        if player.Character.BodyEffects["K.O"].Value == true then
+            finished = true
+            print("finishedknock")
+            if _G.bring == true then 
+                grab(username, targetPosition)
+            else if _G.stomp == true then
+                stomp(username)
+            end
+            end
+        else
+            knockplayer(username)
+        end
     else
         print("No player by that username found.")
     end
 end
+
+
+local function bringplayer(username)
+    local player = game.Players:FindFirstChild(username)
+    if player then
+        pos1 = botPlayer.Character.LowerTorso.Position
+        print(tostring(pos1))
+        local targetPosition = player.Character.PrimaryPart.Position
+        if player.Character.BodyEffects["K.O"].Value == false then
+            _G.bring = true
+            knockplayer(username)
+        else
+            grab(username, pos1)
+        end
+
+        else if player.Character.BodyEffects["Grabbed"].Value == true then
+            botPlayer.Character:SetPrimaryPartCFrame(pos)
+            wait(0.5)
+            pressG()
+         else 
+            botPlayer.Character:SetPrimaryPartCFrame(pos)
+            pressG()
+            print("this one dood")
+end
+
+    end
+        botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(pos1))
+        wait(0.5)
+        pressG()
+        print("gbring = false one")
+        _G.bring = false
+        end
+
+
+local function stompplayer(username)
+    local player = game.Players:FindFirstChild(username)
+    local dead = player.Character.BodyEffects.Dead.Value
+    _G.stomp = true
+    if player then
+        local pos1 = botPlayer.Character.PrimaryPart.Position
+        print(tostring(pos1))
+        local targetPosition = player.Character.PrimaryPart.Position
+        knockplayer(username)
+    end
+end
+
 
 local function stopsummon()
     stopped = true
@@ -111,6 +226,7 @@ local function stopsummon()
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ok I will stop", "All")
 end
 
+-- Function to rejoin the game
 local function rejoinGame()
     local PlaceId = game.PlaceId
     local JobId = game.JobId
@@ -122,27 +238,30 @@ local function rejoinGame()
     end
 end
 
+-- Function to make the bot say something
 local function botSay(message)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
 
 local commands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,
+    ["s"] = summonBotToPlayer,  -- Alias for summon command
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,
+    ["rj"] = rejoinGame,  -- Alias for rejoin command
     ["stop"] = stopsummon,
-    ["say"] = botSay,
+    ["say"] = botSay, -- Command to make the bot say something
     ["goto"] = gotoPlayer,
     ["knock"] = knockplayer,
+    ["bring"] = bringplayer,
+    ["stomp"] = stompplayer,
 }
 local ownercommands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,
+    ["s"] = summonBotToPlayer,  -- Alias for summon command
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,
+    ["rj"] = rejoinGame,  -- Alias for rejoin command
     ["stop"] = stopsummon,
-    ["say"] = botSay,
+    ["say"] = botSay, -- Command to make the bot say something
     ["whitelist"] = whitelistuser,
     ["dewhitelist"] = unwhitelistuser,
     ["wl"] = whitelistuser,
@@ -151,6 +270,8 @@ local ownercommands = {
     ["whitelistview"] = viewwhitelist,
     ["goto"] = gotoPlayer,
     ["knock"] = knockplayer,
+    ["bring"] = bringplayer,
+    ["stomp"] = stompplayer,
 }
 
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
@@ -174,7 +295,7 @@ for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
                 if command == "say" then
                     local message = table.concat(args, " ")
                     func(message)
-                elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" or command == "knock" or command == "goto" then
+                elseif command == "whitelist" or command == "wl" or command == "unwhitelist" or command == "uwl" or command == "knock" or command == "goto" or command == "bring" or command == "stomp" then
                     local username = table.concat(args, " ")
                     print("username: "..username)
                     func(username)
