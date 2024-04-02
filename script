@@ -6,7 +6,7 @@ local Owner = game.Players:GetPlayerByUserId(userId)
 local stopped = false
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local mouse = botPlayer:GetMouse() -- Change to botPlayer's mouse
+local mouse = botPlayer:GetMouse()
 local pos = botPlayer.Character.PrimaryPart.Position
 game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ready!", "All")
 local whitelist = {"OtherOcean"}
@@ -20,19 +20,16 @@ local RIP = CFrame.new(-375, -21, 114)
 _G.finished = null
 repeat
     combat = botPlayer.Backpack:FindFirstChild("Combat")
-    wait(0.1) -- Wait for a short duration before rechecking
-    print("waiting for combat tool")
+    wait(0.1)
     botPlayer.Character:SetPrimaryPartCFrame(UFO)
 until combat
 
--- Function to add a user to the whitelist
 local function whitelistuser(username)
     table.insert(whitelist, username)
     print(username .. " has been added to the whitelist.")
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(username .. " has been added to the whitelist.", "All")
 end
 
--- Function to remove a user from the whitelist
 local function unwhitelistuser(username)
     for i, name in ipairs(whitelist) do
         if name == username then
@@ -45,7 +42,6 @@ local function unwhitelistuser(username)
     print(username .. " is not in the whitelist.")
 end
 
--- Function to view the whitelist
 local function viewwhitelist()
     print("Whitelisted players:")
     for _, player in ipairs(whitelist) do
@@ -61,13 +57,12 @@ local function summonBotToPlayer(bot, targetPlayer)
         if botPlayer.Character and targetPlayer.Character then
             local targetPosition = targetPlayer.Character.PrimaryPart.Position
             local playerOrientation = targetPlayer.Character.PrimaryPart.CFrame.lookVector
-            local offset = playerOrientation * -5 -- Adjust the distance as needed
+            local offset = playerOrientation * -5
             local summonPosition = targetPosition + offset
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(summonPosition))
         
-            -- Preserve the bot's up and down orientation (pitch)
             local botPosition = botPlayer.Character.PrimaryPart.Position
-            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z) -- Preserve the same height
+            local lookAtPosition = Vector3.new(targetPosition.X, botPosition.Y, targetPosition.Z)
             botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(botPosition, lookAtPosition))
             wait()
             summonBotToPlayer(bot, targetPlayer)
@@ -76,21 +71,25 @@ local function summonBotToPlayer(bot, targetPlayer)
         end
     end
 end
+
 local function pressG()
     keypress(Enum.KeyCode.G)
 end
+
 local function pressE()
     keypress(Enum.KeyCode.E)
 end
+
 local function press1()
     keypress(Enum.KeyCode.One)
 end
+
 local function grab(username, pos1)
     local player = game.Players:FindFirstChild(username)
     print("grabbing:" ..username)
     local targetPosition = player.Character.PrimaryPart.Position
 
-    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z)
 
     local targetPosition = player.Character.LowerTorso.Position
         botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition, lookAtPosition))
@@ -106,10 +105,11 @@ local function grab(username, pos1)
         end
     end
 end
+
 local function stomp(username)
     local player = game.Players:FindFirstChild(username)
     local targetPosition = player.Character.LowerTorso.Position
-    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+    local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z)
     botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition.X, targetPosition.Y + 3, targetPosition.Z))
     wait(1)
     pressE()
@@ -128,6 +128,7 @@ local function stomp(username)
     pressE()
     botPlayer.Character:SetPrimaryPartCFrame(UFO)
 end
+
 local function gotoPlayer(username)
     print(botPlayer)
     print(username)
@@ -153,16 +154,21 @@ local function knockplayer(username)
          
         VirtualInputManager:SendMouseButtonEvent(100, 100, 0, true, game, 1) 
     
-        wait(1.5) -- Wait for 1.5 seconds
+        wait(1.5)
 
-        -- Look at the target player's position
         local targetPosition = player.Character.PrimaryPart.Position
 
-        local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z) -- Preserve the same height
+        local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z)
+        local targetPosition2 = Vector3.new(targetPosition.X, targetPosition.Y + 2, targetPosition.Z)
+        botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition2, lookAtPosition))
+        local targetPosition = player.Character.PrimaryPart.Position
+        wait(0.1)
+        local lookAtPosition = Vector3.new(targetPosition.X, 3, targetPosition.Z)
         local targetPosition2 = Vector3.new(targetPosition.X, targetPosition.Y + 2, targetPosition.Z)
         botPlayer.Character:SetPrimaryPartCFrame(CFrame.new(targetPosition2, lookAtPosition))
 
-        wait(0.2) -- Wait for a short duration for better alignment
+
+        wait(0.2)
 
         VirtualInputManager:SendMouseButtonEvent(100, 100, 0, false, game, 1)
         wait(1)
@@ -238,7 +244,6 @@ local function stopsummon()
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ok I will stop", "All")
 end
 
--- Function to rejoin the game
 local function rejoinGame()
     local PlaceId = game.PlaceId
     local JobId = game.JobId
@@ -250,7 +255,6 @@ local function rejoinGame()
     end
 end
 
--- Function to make the bot say something
 local function botSay(message)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
 end
@@ -265,11 +269,11 @@ local function rip()
 end
 local commands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["s"] = summonBotToPlayer,
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["rj"] = rejoinGame,
     ["stop"] = stopsummon,
-    ["say"] = botSay, -- Command to make the bot say something
+    ["say"] = botSay,
     ["goto"] = gotoPlayer,
     ["knock"] = knockplayer,
     ["bring"] = bringplayer,
@@ -281,11 +285,11 @@ local commands = {
 }
 local ownercommands = {
     ["summon"] = summonBotToPlayer,
-    ["s"] = summonBotToPlayer,  -- Alias for summon command
+    ["s"] = summonBotToPlayer,
     ["rejoin"] = rejoinGame,
-    ["rj"] = rejoinGame,  -- Alias for rejoin command
+    ["rj"] = rejoinGame,
     ["stop"] = stopsummon,
-    ["say"] = botSay, -- Command to make the bot say something
+    ["say"] = botSay,
     ["whitelist"] = whitelistuser,
     ["dewhitelist"] = unwhitelistuser,
     ["wl"] = whitelistuser,
